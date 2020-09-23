@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <profile name="sbt 1" modules="Homework_1,homework_1" />
+    <profile name="sbt 2" modules="scala-bootcamp">
+      <option name="deprecationWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-Ymacro-annotations" />
+      </parameters>
+      <plugins>
+        <plugin path="C:\Users\Gera\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\org\typelevel\kind-projector_2.13.3\0.11.0\kind-projector_2.13.3-0.11.0.jar" />
+      </plugins>
+    </profile>
+  </component>
+</project>
