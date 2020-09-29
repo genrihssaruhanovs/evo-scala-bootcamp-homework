@@ -110,6 +110,15 @@ object ClassesAndTraits {
     override def area: Double = base / 2 * altitude
   }
 
+  final case class Point3D(z: Double, baseFigure: Point) extends Shape3D{
+    override def volume: Double = 1
+    override def surfaceArea: Double = 1
+    override def minZ: Double = z
+    override def maxZ: Double = z
+
+    override def move(dx: Double, dy: Double, dz: Double): Point3D = Point3D(z+dz, Point(x+dx, y+dy))
+  }
+
   final case class Cube(z: Double, baseFigure: Square, height: Double) extends Shape3D{
     override def volume: Double = baseFigure.area * height
     override def surfaceArea: Double = baseFigure.area * 6
@@ -155,19 +164,10 @@ object ClassesAndTraits {
 
     override def move(dx: Double, dy: Double, dz: Double): Pyramid = Pyramid(z + dz, Rectangle(x + dx, y + dy, baseFigure.length, baseFigure.width), height)
   }
-  // Homework
-  //
-  // Add additional 2D shapes such as triangle and square.
-  //
-  // In addition to the 2D shapes classes, add also 3D shapes classes
-  // (origin, point, sphere, cube, cuboid, 3D triangle - you can add
-  // others if you think they are a good fit).
-  //
-  // Add method `area` to 2D shapes.
-  //
-  // Add methods `surfaceArea` and `volume` to 3D shapes.
-  //
-  // If some of the implementation involves advanced math, it is OK
-  // to skip it (leave unimplemented), the primary intent of this
-  // exercise is modelling using case classes and traits, and not math.
+
+  object Origin extends Located2D with Located3D{
+    override def x: Double = 0
+    override def y: Double = 0
+    override def z: Double = 0
+  }
 }
