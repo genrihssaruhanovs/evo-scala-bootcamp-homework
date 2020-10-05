@@ -18,12 +18,10 @@ object ControlStructures {
     def getCommand(x: String,
                    numbers: List[Double]): Either[ErrorMessage, Command] = {
       x match {
-        case "divide" =>
-          if (numbers.size == 2) Right(Divide(numbers.head, numbers.last))
-          else
-            Left(
-              ErrorMessage("Divide command must only have dividend and divisor")
-            )
+        case "divide" if numbers.size != 2 => Left(
+          ErrorMessage("Divide command must only have dividend and divisor")
+        )
+        case "divide" => Right(Divide(numbers.head, numbers.last))
         case "sum" => Right(Sum(numbers))
         case "min" => Right(Min(numbers))
         case "max" => Right(Max(numbers))
@@ -63,7 +61,6 @@ object ControlStructures {
 
   sealed trait Result {
     def command: Command
-
     def result: Double
   }
 
