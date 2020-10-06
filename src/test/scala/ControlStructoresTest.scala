@@ -31,7 +31,8 @@ class ControlStructoresTest extends FunSuite {
 
   test ("ClassesAndTraits.process.issues"){
     assert(process("bubble 4 3 8.5 4") == "Error: Wrong command")
-    assert(process("max 5 2 bubble") == "Error: Inconsistent parameters")
+    assert(process("max 5 2 bubble") == "Error: Inconsistent parameters found: bubble")
+    assert(process("max 5 2 bubble 0.2 s") == "Error: Inconsistent parameters found: bubble, s")
     assert(process("max") == "Error: No parameters for calculation")
     assert(process("max    ") == "Error: No parameters for calculation")
     assert(process("max  5   2 1  ") == "the maximum of 5 2 1 is 5")

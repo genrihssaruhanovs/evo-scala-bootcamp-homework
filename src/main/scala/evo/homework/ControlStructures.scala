@@ -61,6 +61,7 @@ object ControlStructures {
 
   sealed trait Result {
     def command: Command
+
     def result: Double
   }
 
@@ -71,10 +72,8 @@ object ControlStructures {
     val convertList: List[String] => Either[ErrorMessage, List[Double]] = {
       case Nil => Left(ErrorMessage("No parameters for calculation"))
       case list =>
-        Try(list.filter(_ != "").map(_.toDouble)) match {
-          case Failure(_) => Left(ErrorMessage("Inconsistent parameters"))
-          case Success(v) => Right(v)
-        }
+        val (failedConversions, converted) = list.filter(_ != "").map(x => Try(x.toDouble).fold(_ => Left(x), s => Right(s))).partitionMap(identity)
+        if (failedConversions.isEmpty) Right(converted) else Left(ErrorMessage("Inconsistent parameters found: " + failedConversions.mkString(", ")))
     }
 
     x.split(" ").toList match {
