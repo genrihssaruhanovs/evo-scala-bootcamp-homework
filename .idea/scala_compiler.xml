@@ -14,6 +14,8 @@
         <plugin path="C:\Users\Gera\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\org\typelevel\kind-projector_2.13.3\0.11.0\kind-projector_2.13.3-0.11.0.jar" />
       </plugins>
     </profile>
-    <profile name="sbt 3" modules="evo-scala-homework" />
+    <profile name="sbt 3" modules="evo-scala-homework">
+      <option name="higherKinds" value="true" />
+    </profile>
   </component>
 </project>

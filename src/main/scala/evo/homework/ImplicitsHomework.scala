@@ -159,21 +159,10 @@ object ImplicitsHomework {
 
       implicit def stringGetSizeScore: GetSizeScore[String] = (string: String) => 12 + string.length * 2
 
-
-      //      Attempts to make List, Vector etc. generic using Iterable type-class
-      //      implicit def iterableGetSizeScore[A: GetSizeScore]: GetSizeScore[Iterable[A]] = (iterate: Iterable[A]) => iterate.foldLeft(12)((x, y) => x + y.sizeScore)
-      //      implicit def iterableGetSizeScore[A: GetSizeScore]: GetSizeScore[Iterable[A]: Iterate] = (iterate: Iterable[A]) => ???
-      //      implicit def iterableGetSizeScore[A: GetSizeScore, T[A]: Iterate]: GetSizeScore[T[A]] = (iterate: T[A]) => value.iterator  <-- seem to be the closest one, but couldn't get values from iterate
-
-
-      implicit def arrayGetSizeScore[A: GetSizeScore]: GetSizeScore[Array[A]] = (array: Array[A]) =>
-        array.foldLeft(12)((x, y) => x + y.sizeScore)
-
-      implicit def listGetSizeScore[A: GetSizeScore]: GetSizeScore[List[A]] = (list: List[A]) =>
-        list.foldLeft(12)((x, y) => x + y.sizeScore)
-
-      implicit def vectorGetSizeScore[A: GetSizeScore]: GetSizeScore[Vector[A]] = (vector: Vector[A]) =>
-        vector.foldLeft(12)((x, y) => x + y.sizeScore)
+      implicit def iterableGetSizeScore[A: GetSizeScore, T[_]: Iterate]: GetSizeScore[T[A]] = (singleParameterCollection: T[A]) => {
+        val iterator = implicitly[Iterate[T]].iterator(singleParameterCollection)
+        iterator.foldLeft(12)((x, y) => x + y.sizeScore)
+      }
 
       implicit def mapGetSizeScore[A: GetSizeScore, B: GetSizeScore]: GetSizeScore[Map[A, B]] = (map: Map[A, B]) =>
         12 + map.map { case (key, value) => key.sizeScore + value.sizeScore }.sum
