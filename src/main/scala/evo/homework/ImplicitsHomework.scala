@@ -4,8 +4,8 @@ import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
-//fill in implementation gaps here making the ImplicitsHomeworkSpec pass!
 object ImplicitsHomework {
+
   /**
    * Lo and behold! Brand new super-useful collection library for Scala!
    *
@@ -34,6 +34,7 @@ object ImplicitsHomework {
     }
 
     object syntax {
+
       implicit class GetSizeScoreOps[T: GetSizeScore](inner: T) {
         def sizeScore: SizeScore = implicitly[GetSizeScore[T]].apply(inner)
       }
@@ -54,6 +55,7 @@ object ImplicitsHomework {
      */
     final class MutableBoundedCache[K: GetSizeScore, V: GetSizeScore](maxSizeScore: SizeScore) {
       //with this you can use .sizeScore syntax on keys and values
+
       import syntax._
 
       /*
@@ -65,10 +67,10 @@ object ImplicitsHomework {
 
       @tailrec
       def put(key: K, value: V): Unit = {
-        if( getCurrentMapSize + key.sizeScore + value.sizeScore <= maxSizeScore){
+        if (getCurrentMapSize + key.sizeScore + value.sizeScore <= maxSizeScore) {
           map += (key -> value)
-        }else{
-          if(map.nonEmpty) {
+        } else {
+          if (map.nonEmpty) {
             map -= map.head._1
             put(key, value)
           }
@@ -83,8 +85,10 @@ object ImplicitsHomework {
      * (yes, this is a feature)
      */
     final case class PackedMultiMap[K, +V](inner: ArraySeq[(K, V)])
+
     object PackedMultiMap {
       def empty[K, V]: PackedMultiMap[K, V] = PackedMultiMap()
+
       def apply[K, V](values: (K, V)*): PackedMultiMap[K, V] = PackedMultiMap(inner = ArraySeq(values: _*))
     }
 
@@ -94,15 +98,18 @@ object ImplicitsHomework {
     trait Iterate[-F[_]] {
       def iterator[T](f: F[T]): Iterator[T]
     }
+
     /**
      * Same as [[Iterate]] but for collections containing 2 types of values (think Map's and like)
      */
     trait Iterate2[-F[_, _]] {
       def iterator1[T, S](f: F[T, S]): Iterator[T]
+
       def iterator2[T, S](f: F[T, S]): Iterator[S]
     }
 
     object instances {
+
       import syntax._
 
       implicit val iterableOnceIterate: Iterate[Iterable] = new Iterate[Iterable] {
@@ -112,24 +119,24 @@ object ImplicitsHomework {
       implicit val arrayIterate: Iterate[Array] = new Iterate[Array] {
         override def iterator[T](f: Array[T]): Iterator[T] = f.iterator
       }
-      //Provide Iterate2 instances for Map and PackedMultiMap!
 
+      //      Attamt to make generic 2 parameter collection iterator, something is missing
+
+      //      implicit val mapIterate: Iterate2[Iterable[(_, _)]] = new Iterate2[Iterable[(_, _)]] {
+      //        override def iterator1[T, S](f: Iterable[(T, S)]): Iterator[T] = f.map { case (key, _) => key }.iterator
+      //        override def iterator2[T, S](f: Iterable[(T, S)]): Iterator[S] = f.map { case (_, value) => value }.iterator
+      //      }
       implicit val mapIterate: Iterate2[Map] = new Iterate2[Map] {
-        override def iterator1[T, S](f: Map[T,S]): Iterator[T] = f.keys.iterator
-        override def iterator2[T, S](f: Map[T,S]): Iterator[S] = f.values.iterator
+        override def iterator1[T, S](f: Map[T, S]): Iterator[T] = f.keys.iterator
+
+        override def iterator2[T, S](f: Map[T, S]): Iterator[S] = f.values.iterator
       }
-
-
-//      implicit val mapIterate: Iterate2[Iterable[(_, _)]] = new Iterate2[Iterable[(_, _)]] {
-//        override def iterator1[T, S](f: Iterable[(T, S)]): Iterator[T] = f.map { case (key, _) => key }.iterator
-//        override def iterator2[T, S](f: Iterable[(T, S)]): Iterator[S] = f.map { case (_, value) => value }.iterator
-//      }
 
       implicit val multiMapIterate: Iterate2[PackedMultiMap] = new Iterate2[PackedMultiMap] {
-        override def iterator1[T, S](f: PackedMultiMap[T,S]): Iterator[T] = f.inner.map { case (key, _) => key }.iterator
-        override def iterator2[T, S](f: PackedMultiMap[T,S]): Iterator[S] = f.inner.map { case (_, value) => value }.iterator
+        override def iterator1[T, S](f: PackedMultiMap[T, S]): Iterator[T] = f.inner.map { case (key, _) => key }.iterator
+
+        override def iterator2[T, S](f: PackedMultiMap[T, S]): Iterator[S] = f.inner.map { case (_, value) => value }.iterator
       }
-      //if the code doesn't compile while you think it should - sometimes full rebuild helps!
 
       /*
       replace this big guy with proper implicit instances for types:
@@ -138,27 +145,42 @@ object ImplicitsHomework {
       - Array[T], List[T], Vector[T], Map[K,V], PackedMultiMap[K,V]
         - points to karma if you provide those in a generic way
         (Iterate and Iterate2 type-classes might be helpful!)
+      */
 
-      If you struggle with writing generic instances for Iterate and Iterate2, start by writing instances for
-      List and other collections and then replace those with generic instances.
-       */
-//      implicit def stubGetSizeScore[T]: GetSizeScore[T] = (_: T) => 42
       implicit def byteGetSizeScore: GetSizeScore[Byte] = (_: Byte) => 1
+
       implicit def intGetSizeScore: GetSizeScore[Int] = (_: Int) => 4
+
       implicit def longGetSizeScore: GetSizeScore[Long] = (_: Long) => 8
+
       implicit def charGetSizeScore: GetSizeScore[Char] = (_: Char) => 2
+
       implicit def stringGetSizeScore: GetSizeScore[String] = (string: String) => 12 + string.length * 2
 
-      implicit def iterableGetSizeScore[A: GetSizeScore]: GetSizeScore[Iterable[A]] = (value: Iterable[A]) => value.foldLeft(12)((x,y) => x + y.sizeScore)
+
+      //      Attempts to make List, Vector etc. generic using Iterable type-class
+      //      implicit def iterableGetSizeScore[A: GetSizeScore]: GetSizeScore[Iterable[A]] = (iterate: Iterable[A]) => iterate.foldLeft(12)((x, y) => x + y.sizeScore)
+      //      implicit def iterableGetSizeScore[A: GetSizeScore]: GetSizeScore[Iterable[A]: Iterate] = (iterate: Iterable[A]) => ???
+      //      implicit def iterableGetSizeScore[A: GetSizeScore, T[A]: Iterate]: GetSizeScore[T[A]] = (iterate: T[A]) => value.iterator  <-- seem to be the closest one, but couldn't get values from iterate
 
 
-//      implicit def arrayGetSizeScore[A: GetSizeScore]: GetSizeScore[Array[A]] = (list: Array[A]) => list.foldLeft(12)((x,y) => x + y.sizeScore)
-//      implicit def listGetSizeScore[A: GetSizeScore]: GetSizeScore[List[A]] = (list: List[A]) => list.foldLeft(12)((x,y) => x + y.sizeScore)
-//      implicit def vectorGetSizeScore[A: GetSizeScore]: GetSizeScore[Vector[A]] = (vector: Vector[A]) => vector.foldLeft(12)((x,y) => x + y.sizeScore)
-      implicit def mapGetSizeScore[A: GetSizeScore, B: GetSizeScore]: GetSizeScore[Map[A,B]] = (map: Map[A,B]) => 12 + map.map { case (key, value) => key.sizeScore + value.sizeScore}.sum
-      implicit def pMapGetSizeScore[A: GetSizeScore, B: GetSizeScore]: GetSizeScore[PackedMultiMap[A,B]] = (pMap: PackedMultiMap[A,B]) => 12 + pMap.inner.map { case (key, value) => key.sizeScore + value.sizeScore}.sum
+      implicit def arrayGetSizeScore[A: GetSizeScore]: GetSizeScore[Array[A]] = (array: Array[A]) =>
+        array.foldLeft(12)((x, y) => x + y.sizeScore)
+
+      implicit def listGetSizeScore[A: GetSizeScore]: GetSizeScore[List[A]] = (list: List[A]) =>
+        list.foldLeft(12)((x, y) => x + y.sizeScore)
+
+      implicit def vectorGetSizeScore[A: GetSizeScore]: GetSizeScore[Vector[A]] = (vector: Vector[A]) =>
+        vector.foldLeft(12)((x, y) => x + y.sizeScore)
+
+      implicit def mapGetSizeScore[A: GetSizeScore, B: GetSizeScore]: GetSizeScore[Map[A, B]] = (map: Map[A, B]) =>
+        12 + map.map { case (key, value) => key.sizeScore + value.sizeScore }.sum
+
+      implicit def pMapGetSizeScore[A: GetSizeScore, B: GetSizeScore]: GetSizeScore[PackedMultiMap[A, B]] = (pMap: PackedMultiMap[A, B]) =>
+        12 + pMap.inner.map { case (key, value) => key.sizeScore + value.sizeScore }.sum
 
     }
+
   }
 
   /*
@@ -166,44 +188,48 @@ object ImplicitsHomework {
   #GoodVibes #ThrowbackThursday #NoFilter #squadgoals
    */
   object MyTwitter {
+
     import SuperVipCollections4s._
     import instances._
     import syntax._
 
     final case class Twit(
-      id: Long,
-      userId: Int,
-      hashTags: Vector[String],
-      attributes: PackedMultiMap[String, String],
-      fbiNotes: List[FbiNote],
-    )
+                           id: Long,
+                           userId: Int,
+                           hashTags: Vector[String],
+                           attributes: PackedMultiMap[String, String],
+                           fbiNotes: List[FbiNote],
+                         )
 
     final case class FbiNote(
-      month: String,
-      favouriteChar: Char,
-      watchedPewDiePieTimes: Long,
-    )
+                              month: String,
+                              favouriteChar: Char,
+                              watchedPewDiePieTimes: Long,
+                            )
 
     trait TwitCache {
       def put(twit: Twit): Unit
+
       def get(id: Long): Option[Twit]
     }
+
     implicit def fbiGetSizeScore: GetSizeScore[FbiNote] = (note: FbiNote) =>
       note.month.sizeScore +
-      note.favouriteChar.sizeScore +
-      note.watchedPewDiePieTimes.sizeScore
+        note.favouriteChar.sizeScore +
+        note.watchedPewDiePieTimes.sizeScore
 
     implicit def twitGetSizeScore: GetSizeScore[Twit] = (twit: Twit) => {
       twit.id.sizeScore +
-      twit.userId.sizeScore +
-      twit.hashTags.sizeScore +
-      twit.attributes.sizeScore +
-      twit.fbiNotes.sizeScore }
+        twit.userId.sizeScore +
+        twit.hashTags.sizeScore +
+        twit.attributes.sizeScore +
+        twit.fbiNotes.sizeScore
+    }
 
     /*
     Return an implementation based on MutableBoundedCache[Long, Twit]
      */
-    def createTwitCache(maxSizeScore: SizeScore): TwitCache = new TwitCache{
+    def createTwitCache(maxSizeScore: SizeScore): TwitCache = new TwitCache {
       val mutableCache = new MutableBoundedCache[Long, Twit](maxSizeScore)
 
       override def put(twit: Twit): Unit = mutableCache.put(twit.id, twit)
@@ -211,4 +237,5 @@ object ImplicitsHomework {
       override def get(id: Long): Option[Twit] = mutableCache.get(id)
     }
   }
+
 }
