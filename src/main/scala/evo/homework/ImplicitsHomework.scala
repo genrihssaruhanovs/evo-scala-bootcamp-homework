@@ -122,7 +122,7 @@ object ImplicitsHomework {
         override def iterator[T](f: Array[T]): Iterator[T] = f.iterator
       }
 
-      //      Attamt to make generic 2 parameter collection iterator, something is missing
+      //      Attempt to make generic 2 parameter collection iterator, something is missing
 
       //      implicit val mapIterate: Iterate2[Iterable[(_, _)]] = new Iterate2[Iterable[(_, _)]] {
       //        override def iterator1[T, S](f: Iterable[(T, S)]): Iterator[T] = f.map { case (key, _) => key }.iterator
