@@ -71,7 +71,9 @@ object ImplicitsHomework {
           map += (key -> value)
         } else {
           if (map.nonEmpty) {
-            map -= map.head._1
+            val(headKey, _) = map.head
+            map -= headKey
+            //can you make 2 lines above in one line?
             put(key, value)
           }
         }
