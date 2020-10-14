@@ -124,13 +124,13 @@ object ImplicitsHomework {
 
       //      Attempt to make generic 2 parameter collection iterator, something is missing
 
-      //      implicit val mapIterate: Iterate2[Iterable[(_, _)]] = new Iterate2[Iterable[(_, _)]] {
-      //        override def iterator1[T, S](f: Iterable[(T, S)]): Iterator[T] = f.map { case (key, _) => key }.iterator
-      //        override def iterator2[T, S](f: Iterable[(T, S)]): Iterator[S] = f.map { case (_, value) => value }.iterator
-      //      }
+//      implicit val mapIterate: Iterate2[Iterable[(_,_)]] = new Iterate2[Iterable[(_,_)]] {
+//        override def iterator1[T, S](f: Iterable[(T, S)]): Iterator[T] = f.map { case (key, _) => key }.iterator
+//        override def iterator2[T, S](f: Iterable[(T, S)]): Iterator[S] = f.map { case (_, value) => value }.iterator
+//      }
+
       implicit val mapIterate: Iterate2[Map] = new Iterate2[Map] {
         override def iterator1[T, S](f: Map[T, S]): Iterator[T] = f.keys.iterator
-
         override def iterator2[T, S](f: Map[T, S]): Iterator[S] = f.values.iterator
       }
 
@@ -140,14 +140,7 @@ object ImplicitsHomework {
         override def iterator2[T, S](f: PackedMultiMap[T, S]): Iterator[S] = f.inner.map { case (_, value) => value }.iterator
       }
 
-      /*
-      replace this big guy with proper implicit instances for types:
-      - Byte, Char, Int, Long
-      - String
-      - Array[T], List[T], Vector[T], Map[K,V], PackedMultiMap[K,V]
-        - points to karma if you provide those in a generic way
-        (Iterate and Iterate2 type-classes might be helpful!)
-      */
+      val headerScore = 12
 
       implicit def byteGetSizeScore: GetSizeScore[Byte] = (_: Byte) => 1
 
@@ -157,19 +150,18 @@ object ImplicitsHomework {
 
       implicit def charGetSizeScore: GetSizeScore[Char] = (_: Char) => 2
 
-      implicit def stringGetSizeScore: GetSizeScore[String] = (string: String) => 12 + string.length * 2
+      implicit def stringGetSizeScore: GetSizeScore[String] = (string: String) => headerScore + string.length * 2
 
       implicit def iterableGetSizeScore[A: GetSizeScore, T[_]: Iterate]: GetSizeScore[T[A]] = (singleParameterCollection: T[A]) => {
         val iterator = implicitly[Iterate[T]].iterator(singleParameterCollection)
-        iterator.foldLeft(12)((x, y) => x + y.sizeScore)
+        headerScore + iterator.map(_.sizeScore).sum
       }
 
-      implicit def mapGetSizeScore[A: GetSizeScore, B: GetSizeScore]: GetSizeScore[Map[A, B]] = (map: Map[A, B]) =>
-        12 + map.map { case (key, value) => key.sizeScore + value.sizeScore }.sum
-
-      implicit def pMapGetSizeScore[A: GetSizeScore, B: GetSizeScore]: GetSizeScore[PackedMultiMap[A, B]] = (pMap: PackedMultiMap[A, B]) =>
-        12 + pMap.inner.map { case (key, value) => key.sizeScore + value.sizeScore }.sum
-
+      implicit def iterable2GetSizeScore[A: GetSizeScore, B: GetSizeScore, T[_,_]: Iterate2]: GetSizeScore[T[A,B]] = (twoParameterCollection: T[A,B]) => {
+        val iterator1 = implicitly[Iterate2[T]].iterator1(twoParameterCollection)
+        val iterator2 = implicitly[Iterate2[T]].iterator2(twoParameterCollection)
+        headerScore + iterator1.map(_.sizeScore).sum + iterator2.map(_.sizeScore).sum
+      }
     }
 
   }
