@@ -129,6 +129,7 @@ object AlgebraicDataTypes {
   object Hand {
     val handType
       : HoldemHandType = HoldemHandType.Omaha //To be redesigned, must be current holdem type
+
     def create(cards: List[Card]): Either[ErrorMessage, Hand] = {
       if (cards.size == handType.handCardCount) Right(Hand(cards))
       else Left(ErrorMessage("Card count mismatch when creating board"))
@@ -248,7 +249,9 @@ object AlgebraicDataTypes {
 
   final case class Game private (board: Board, hands: List[Hand])
   object Game {
-    def create(input: String): Either[ErrorMessage, Game] = {
+    def create(input: String, omahaSwitch: Boolean): Either[ErrorMessage, Game] = {
+      val gameMode = if(omahaSwitch) HoldemHandType.Omaha else HoldemHandType.Texas
+
       input.split(" ").toList match {
         case Nil => Left(ErrorMessage("Input string is blank"))
         case x :: xs =>
