@@ -87,6 +87,7 @@ object AlgebraicDataTypes {
   sealed trait CardSet {
     val cards: List[Card]
   }
+
   object CardSet {
     def create(input: String,
                cardCount: Int): Either[ErrorMessage, List[Card]] = {
@@ -124,6 +125,23 @@ object AlgebraicDataTypes {
       CardSet.create(input, 5).fold(l => Left(l), r => Right(Board(r)))
     }
   }
+//  sealed trait Hand[H <: Hand[H]]{
+//    val cards: Set[Card]
+//  }
+//
+//  final case class TexasHand private (cards: Set[Card]) extends Hand[TexasHand]
+//  object TexasHand {
+//    def create(cards: Set[Card]): Either[ErrorMessage, TexasHand] =
+//      if (cards.size == HoldemHandType.Texas.handCardCount) Right(TexasHand(cards))
+//          else Left(ErrorMessage("Card count mismatch when creating texas hand"))
+//  }
+//
+//  final case class OmahaHand private (cards: Set[Card]) extends Hand[OmahaHand]
+//  object TexasHand {
+//    def create(cards: Set[Card]): Either[ErrorMessage, OmahaHand] =
+//      if (cards.size == HoldemHandType.Texas.handCardCount) Right(OmahaHand(cards))
+//      else Left(ErrorMessage("Card count mismatch when creating texas hand"))
+//  }
 
   final case class Hand private (cards: List[Card]) extends CardSet
   object Hand {
@@ -219,19 +237,16 @@ object AlgebraicDataTypes {
         Straight.hasCombination(fiveCards) && Flush.hasCombination(fiveCards)
     }
 
-    def getCombination(fiveCards: FiveCardSet): Any = { // rework this method to return required combination
-      fiveCards match {
-        case fiveCards if StraightFlush.hasCombination(fiveCards) => ???
-        case fiveCards if FourOfAKind.hasCombination(fiveCards)   => ???
-        case fiveCards if FullHouse.hasCombination(fiveCards)     => ???
-        case fiveCards if Flush.hasCombination(fiveCards)         => ???
-        case fiveCards if Straight.hasCombination(fiveCards)      => ???
-        case fiveCards if ThreeOfAKind.hasCombination(fiveCards)  => ???
-        case fiveCards if TwoPairs.hasCombination(fiveCards)      => ???
-        case fiveCards if Pair.hasCombination(fiveCards)          => ???
-        case fiveCards                                           => ???
-
-      }
+    def getCombination(fiveCards: FiveCardSet): Combination = { // rework this method to return required combination
+      if (StraightFlush.hasCombination(fiveCards)) StraightFlush
+      else if (FourOfAKind.hasCombination(fiveCards)) FourOfAKind
+      else if (FullHouse.hasCombination(fiveCards)) FullHouse
+      else if (Flush.hasCombination(fiveCards)) Flush
+      else if (Straight.hasCombination(fiveCards)) Straight
+      else if (ThreeOfAKind.hasCombination(fiveCards)) ThreeOfAKind
+      else if (TwoPairs.hasCombination(fiveCards)) TwoPairs
+      else if (Pair.hasCombination(fiveCards)) Pair
+      else HighCard
     }
   }
 
@@ -249,8 +264,9 @@ object AlgebraicDataTypes {
 
   final case class Game private (board: Board, hands: List[Hand])
   object Game {
-    def create(input: String, omahaSwitch: Boolean): Either[ErrorMessage, Game] = {
-      val gameMode = if(omahaSwitch) HoldemHandType.Omaha else HoldemHandType.Texas
+    def create(input: String,
+               omahaSwitch: Boolean): Either[ErrorMessage, Game] = {
+      val gameMode = if (omahaSwitch) HoldemHandType.Omaha else HoldemHandType.Texas
 
       input.split(" ").toList match {
         case Nil => Left(ErrorMessage("Input string is blank"))

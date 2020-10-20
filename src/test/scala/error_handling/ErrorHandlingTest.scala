@@ -1,10 +1,10 @@
 package error_handling
-import java.text.SimpleDateFormat
 import cats.syntax.all._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.Assertion
 import evo.homework.error_handling.ErrorHandling.Homework._
+import java.time.YearMonth
 
 class ErrorHandlingTest   extends AnyFlatSpec with Matchers{
   "StudentValidator" should "handle valid and invalid students" in {
@@ -13,24 +13,24 @@ class ErrorHandlingTest   extends AnyFlatSpec with Matchers{
     CreditCardValidator.validate(
       name = "Genrihs",
       number = "1234567890123456",
-      expirationDate = "31.12.2020",
+      expirationDate = "12/20",
       securityCode = "123"
-    ) shouldBe CreditCard("Genrihs", "1234567890123456", new SimpleDateFormat("dd.MM.yyyy").parse("31.12.2020"), "123").validNec
+    ) shouldBe CreditCard("Genrihs", "1234567890123456", YearMonth.parse("2020-12"), "123").validNec
 
+
+    CreditCardValidator.validate(
+      name = "Genrihs Saruhanovs",
+      number = "1234567890123456",
+      expirationDate = "12/20",
+      securityCode = "123"
+    ) shouldBe CreditCard("Genrihs Saruhanovs", "1234567890123456", YearMonth.parse("2020-12"), "123").validNec
 
     CreditCardValidator.validate(
       name = "Genrihs",
       number = "1234567890123456",
-      expirationDate = "20201231",
+      expirationDate = "12/20",
       securityCode = "123"
-    ) shouldBe CreditCard("Genrihs", "1234567890123456", new SimpleDateFormat("yyyyMMdd").parse("20201231"), "123").validNec
-
-    CreditCardValidator.validate(
-      name = "Genrihs",
-      number = "1234567890123456",
-      expirationDate = "31/12/2020",
-      securityCode = "123"
-    ) shouldBe CreditCard("Genrihs", "1234567890123456", new SimpleDateFormat("dd/MM/yyyy").parse("31/12/2020"), "123").validNec
+    ) shouldBe CreditCard("Genrihs", "1234567890123456", YearMonth.parse("2020-12"), "123").validNec
 
     def checkInvalid(name: String, number: String, expirationDate: String, securityCode: String, errors: Set[ValidationError]): Assertion =
       CreditCardValidator.validate(
@@ -43,21 +43,21 @@ class ErrorHandlingTest   extends AnyFlatSpec with Matchers{
     checkInvalid(
       name = "Genrihs111",
       number = "1234567890123456",
-      expirationDate = "31/12/2020",
+      expirationDate = "12/20",
       securityCode = "123",
       errors = Set(NameHasSpecialCharacters),
     )
     checkInvalid(
       name = "Genrihs111",
       number = "12345678901234561",
-      expirationDate = "31/12/2020",
+      expirationDate = "12/20",
       securityCode = "123",
       errors = Set(NameHasSpecialCharacters, CardNumberLengthMismatch),
     )
     checkInvalid(
       name = "Genrihs111",
       number = "12345678901234561",
-      expirationDate = "31/12/2020",
+      expirationDate = "12/20",
       securityCode = "1AZ",
       errors = Set(NameHasSpecialCharacters, CardNumberLengthMismatch, SecurityCodeIsNotNumeric),
     )
@@ -65,7 +65,7 @@ class ErrorHandlingTest   extends AnyFlatSpec with Matchers{
     checkInvalid(
       name = "Genrihs111",
       number = "12345678901234561",
-      expirationDate = "31/12/2020",
+      expirationDate = "12/20",
       securityCode = "1AZ1",
       errors = Set(NameHasSpecialCharacters, CardNumberLengthMismatch, SecurityCodeLengthMismatch, SecurityCodeIsNotNumeric),
     )
@@ -73,7 +73,7 @@ class ErrorHandlingTest   extends AnyFlatSpec with Matchers{
     checkInvalid(
       name = "Genrihs111",
       number = "12345678901234561L",
-      expirationDate = "31/12/2020",
+      expirationDate = "12/20",
       securityCode = "1AZ1",
       errors = Set(NameHasSpecialCharacters, CardNumberIsNotNumeric, CardNumberLengthMismatch, SecurityCodeLengthMismatch, SecurityCodeIsNotNumeric),
     )
@@ -81,7 +81,7 @@ class ErrorHandlingTest   extends AnyFlatSpec with Matchers{
     checkInvalid(
       name = "Genrihs",
       number = "1234567890123456",
-      expirationDate = "31/122020",
+      expirationDate = "1220",
       securityCode = "123",
       errors = Set(DateFormatMismatch),
     )
@@ -89,7 +89,7 @@ class ErrorHandlingTest   extends AnyFlatSpec with Matchers{
     checkInvalid(
       name = "Genrihs",
       number = "1234567890123456",
-      expirationDate = "31/12/2019",
+      expirationDate = "12/19",
       securityCode = "123",
       errors = Set(CreditCardIsExpired),
     )
