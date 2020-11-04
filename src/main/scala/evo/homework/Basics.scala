@@ -9,4 +9,10 @@ object Basics {
   @tailrec
   def gcd(a: Int, b: Int): Int =
     if (b == 0) a else gcd(b, a % b)
+
+
+
+  def main(args: Array[String]): Unit = {
+    println((0 to 10).filter(_ % 2 == 0).sum)
+  }
 }

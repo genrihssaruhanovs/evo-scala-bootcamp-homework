@@ -1,2 +1,7 @@
-[debug] Acquiring lock on file C:\Users\Gera\Desktop\evo-scala-bootcamp-homework\Homework_1\project\target\.sbt-compilation-infos\homework_1-compile\.sbt-idea-lock ...
-[debug] Releasing lock on file C:\Users\Gera\Desktop\evo-scala-bootcamp-homework\Homework_1\project\target\.sbt-compilation-infos\homework_1-compile\.sbt-idea-lock.
+[0m[[0m[33mwarn[0m] [0m[0mC:\Users\Gera\Desktop\evo-scala-bootcamp-homework\src\main\scala\evo\homework\ControlStructures.scala:15:38: adaptation of an empty argument list by inserting () is deprecated: this is unlikely to be what you want[0m
+[0m[[0m[33mwarn[0m] [0m[0m        signature: Right.apply[A, B](value: B): scala.util.Right[A,B][0m
+[0m[[0m[33mwarn[0m] [0m[0m  given arguments: <none>[0m
+[0m[[0m[33mwarn[0m] [0m[0m after adaptation: Right((): Unit)[0m
+[0m[[0m[33mwarn[0m] [0m[0m      if (commands.contains(x)) Right() else Left(ErrorMessage("Wrong command"))[0m
+[0m[[0m[33mwarn[0m] [0m[0m                                     ^[0m
+[0m[[0m[33mwarn[0m] [0m[0mone warning found[0m
