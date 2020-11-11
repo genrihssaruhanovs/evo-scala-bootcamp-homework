@@ -36,10 +36,11 @@ object EffectsHomework1 {
 
     def map[B](f: A => B): IO[B] = IO(f(run()))
 
-    def flatMap[B](f: A => IO[B]): IO[B] = Try(run()) match {
-      case Success(value) => f(value)
-      case Failure(exception) => IO.raiseError(exception)
-    }
+    def flatMap[B](f: A => IO[B]): IO[B] =
+      IO.suspend(Try(run()) match {
+        case Success(value)     => f(value)
+        case Failure(exception) => IO.raiseError(exception)
+      })
 
     def *>[B](another: IO[B]): IO[B] = flatMap(_ => another)
 
@@ -51,20 +52,23 @@ object EffectsHomework1 {
 
     def option: IO[Option[A]] = IO(Try(run()).toOption)
 
-    def handleErrorWith[AA >: A](f: Throwable => IO[AA]): IO[AA] = Try(run()) match {
+    def handleErrorWith[AA >: A](f: Throwable => IO[AA]): IO[AA] =
+      IO.suspend(Try(run()) match {
         case Success(value)     => IO(value)
         case Failure(exception) => f(exception)
-    }
+      })
 
-    def redeem[B](recover: Throwable => B, map: A => B): IO[B] = Try(run()) match {
+    def redeem[B](recover: Throwable => B, map: A => B): IO[B] =
+      IO.suspend(Try(run()) match {
         case Success(value)     => IO(map(value))
         case Failure(exception) => IO(recover(exception))
-    }
+      })
 
-    def redeemWith[B](recover: Throwable => IO[B], bind: A => IO[B]): IO[B] = Try(run()) match {
+    def redeemWith[B](recover: Throwable => IO[B], bind: A => IO[B]): IO[B] =
+      Try(run()) match {
         case Success(value)     => bind(value)
         case Failure(exception) => recover(exception)
-    }
+      }
 
     def unsafeRunSync(): A = run()
 
@@ -75,8 +79,7 @@ object EffectsHomework1 {
 
     def apply[A](body: => A): IO[A] = delay(body)
 
-    //guess I didn't understand how suspend should work
-    def suspend[A](thunk: => IO[A]): IO[A] = ??? // if(thunk.isInstanceOf[IO[IO[_]]]) IO.suspend() else thunk
+    def suspend[A](thunk: => IO[A]): IO[A] = IO(thunk.run())
 
     def delay[A](body: => A): IO[A] = new IO(() => body)
 
@@ -87,13 +90,14 @@ object EffectsHomework1 {
       case Left(e)  => raiseError(e)
     }
 
-    def fromOption[A](option: Option[A])(orElse: => Throwable): IO[A] = option match {
+    def fromOption[A](option: Option[A])(orElse: => Throwable): IO[A] =
+      option match {
         case Some(value) => IO(value)
         case None        => raiseError(orElse)
-    }
+      }
 
     def fromTry[A](t: Try[A]): IO[A] = t match {
-      case Success(value) => IO(value)
+      case Success(value)     => IO(value)
       case Failure(exception) => raiseError(exception)
     }
 
@@ -101,13 +105,17 @@ object EffectsHomework1 {
 
     def raiseError[A](e: Throwable): IO[A] = IO(throw e)
 
-    def raiseUnless(cond: Boolean)(e: => Throwable): IO[Unit] = if(!cond) raiseError(e) else unit
+    def raiseUnless(cond: Boolean)(e: => Throwable): IO[Unit] =
+      if (!cond) raiseError(e) else unit
 
-    def raiseWhen(cond: Boolean)(e: => Throwable): IO[Unit] = if(cond) raiseError(e) else unit
+    def raiseWhen(cond: Boolean)(e: => Throwable): IO[Unit] =
+      if (cond) raiseError(e) else unit
 
-    def unlessA(cond: Boolean)(action: => IO[Unit]): IO[Unit] = if(!cond) action else unit
+    def unlessA(cond: Boolean)(action: => IO[Unit]): IO[Unit] =
+      if (!cond) action else unit
 
-    def whenA(cond: Boolean)(action: => IO[Unit]): IO[Unit] = if(cond) action else unit
+    def whenA(cond: Boolean)(action: => IO[Unit]): IO[Unit] =
+      if (cond) action else unit
 
     val unit: IO[Unit] = IO.pure(())
   }
