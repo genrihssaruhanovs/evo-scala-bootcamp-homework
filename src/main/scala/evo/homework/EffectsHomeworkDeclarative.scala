@@ -43,38 +43,35 @@ object EffectsHomeworkDeclarative {
 
     def void: IO[Unit] = map(_ => ())
     def attempt: IO[Either[Throwable, A]] = IO(Try(unwrap(this)).toEither)
-    def option: IO[Option[A]] = IO(Try(unwrap(this)).toOption)
+    def option: IO[Option[A]] = attempt.map(_.toOption)
 
-    def handleErrorWith[AA >: A](f: Throwable => IO[AA]): IO[AA] =
-      IO.suspend(Try(unwrap(this)) match {
-        case Success(value)     => IO(value)
-        case Failure(exception) => f(exception)
-      })
+    def handleErrorWith[AA >: A](f: Throwable => IO[AA]): IO[AA] = attempt.flatMap {
+        case Right(value) => IO(value)
+        case Left(exception) => f(exception)
+    }
 
-    def redeem[B](recover: Throwable => B, map: A => B): IO[B] =
-      IO.suspend(Try(unwrap(this)) match {
-        case Success(value)     => IO(map(value))
-        case Failure(exception) => IO(recover(exception))
-      })
+    def redeem[B](recover: Throwable => B, map: A => B): IO[B] = attempt.flatMap {
+      case Right(value) => IO(map(value))
+      case Left(exception) => IO(recover(exception))
+    }
 
-    def redeemWith[B](recover: Throwable => IO[B], bind: A => IO[B]): IO[B] =
-      IO.suspend(Try(unwrap(this)) match {
-        case Success(value)     => bind(value)
-        case Failure(exception) => recover(exception)
-      })
+    def redeemWith[B](recover: Throwable => IO[B], bind: A => IO[B]): IO[B] = attempt.flatMap {
+      case Right(value) => bind(value)
+      case Left(exception) => recover(exception)
+    }
 
     def unsafeRunSync(): A = unwrap(this)
 
     def unsafeToFuture(): Future[A] = Future { unsafeRunSync() }
 
     @tailrec
-    def unwrap(io: IO[A]) : A = {
+    def unwrap(io: IO[A]): A = {
       io match {
-        case Delay(thunk) => thunk()
-        case Suspend(thunk) => thunk().unsafeRunSync()
-        case Pure(a) => a
-        case RaiseError(e) => throw e
-        case Map(source, f) => f(source.unsafeRunSync())
+        case Delay(thunk)       => thunk()
+        case Suspend(thunk)     => thunk().unsafeRunSync()
+        case Pure(a)            => a
+        case RaiseError(e)      => throw e
+        case Map(source, f)     => f(source.unsafeRunSync())
         case FlatMap(source, f) => unwrap(f(source.unsafeRunSync()))
       }
     }
@@ -93,15 +90,16 @@ object EffectsHomeworkDeclarative {
     def delay[A](body: => A): IO[A] = Delay(() => body)
     def pure[A](a: A): IO[A] = Pure(a)
     def fromEither[A](e: Either[Throwable, A]): IO[A] = e match {
-      case Right(value) => IO(value)
+      case Right(value)    => IO(value)
       case Left(exception) => RaiseError(exception)
     }
-    def fromOption[A](option: Option[A])(orElse: => Throwable): IO[A] = option match {
-      case Some(value) => IO(value)
-      case None => RaiseError(orElse)
-    }
+    def fromOption[A](option: Option[A])(orElse: => Throwable): IO[A] =
+      option match {
+        case Some(value) => IO(value)
+        case None        => RaiseError(orElse)
+      }
     def fromTry[A](t: Try[A]): IO[A] = t match {
-      case Success(value) => IO(value)
+      case Success(value)     => IO(value)
       case Failure(exception) => RaiseError(exception)
     }
     def none[A]: IO[Option[A]] = IO(None)
