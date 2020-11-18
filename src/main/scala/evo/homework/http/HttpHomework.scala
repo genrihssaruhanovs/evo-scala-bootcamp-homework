@@ -3,8 +3,7 @@ package evo.homework.http
 import java.util.InputMismatchException
 import java.util.concurrent.atomic.AtomicReference
 
-import cats.effect.concurrent.Ref
-import cats.effect.{Blocker, ExitCode, IO, IOApp}
+import cats.effect.{ExitCode, IO, IOApp}
 import cats.implicits.catsSyntaxFlatMapOps
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.dsl.io._
@@ -13,10 +12,8 @@ import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s._
 import org.http4s.client.Client
-import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
 
-import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.DurationInt
 import scala.io.StdIn
@@ -42,17 +39,12 @@ import scala.util.Random
 import java.util.UUID.randomUUID
 
 object GuessServer extends IOApp {
-
-  val sessionsRef: IO[Ref[IO, Map[String, Session]]] =
-    Ref.of[IO, Map[String, Session]](Map.empty[String, Session])
   case class Session(id: String, numberToGuess: Int, attemptsLeft: Int)
 
-  var sessions: mutable.Map[String, Session] =
-    scala.collection.mutable.Map[String, Session]()
-
-//  val sessionCache: IO[SessionCache] = for {
-//    ref <- Ref[IO].of(Map.empty[String, Session])
-//  } yield new SessionCache(ref)
+  //  val sessionsRef: IO[Ref[IO, Map[String, Session]]] =
+  //    Ref.of[IO, Map[String, Session]](Map.empty[String, Session])
+  private val sessionsRef: AtomicReference[Map[String, Session]] =
+    new AtomicReference(Map.empty[String, Session])
 
   override def run(args: List[String]): IO[ExitCode] =
     BlazeServerBuilder[IO](ExecutionContext.global)
@@ -64,7 +56,7 @@ object GuessServer extends IOApp {
       .as(ExitCode.Success)
 
   private val guessRoute = HttpRoutes.of[IO] {
-    case req @ GET -> Root / "start" / IntVar(min) / IntVar(max) / IntVar(
+    case GET -> Root / "start" / IntVar(min) / IntVar(max) / IntVar(
           attempts
         ) =>
       val numberToGuess = new Random().nextInt(max + 1 - min) + min
@@ -75,34 +67,16 @@ object GuessServer extends IOApp {
 //        sessions <- sessionsRef
 //        _        <- sessions.update(sessions => sessions + (session.id -> session))
 //      } yield ()
+      sessionsRef.updateAndGet(sessions => sessions + (session.id -> session))
 
-      sessions += (session.id -> session)
       Ok("Game is created").map(
         _.addCookie(ResponseCookie("sessionId", session.id))
       )
-    //      val requestHeaders = req.headers
-    //      val result = for {
-    //        minHeader <- requestHeaders.find(_.name == "min")
-    //        min <- minHeader.value.toIntOption
-    //        maxHeader <- requestHeaders.find(_.name == "max")
-    //        max <- maxHeader.value.toIntOption
-    //        attemptsHeader <- requestHeaders.find(_.name == "attempts")
-    //        attempts <- attemptsHeader.value.toIntOption
-    //        numberToGuess = new Random().nextInt(max + 1 - min) + min
-    //        sessionId = randomUUID().toString
-    //      } yield Session(sessionId, numberToGuess, 0, attempts)
-    //
-    //      result match {
-    //        case Some(session) =>
-    //          sessions += (session.id -> session)
-    //          Ok("Game is created").map(_.addCookie(ResponseCookie("sessionId", session.id)))
-    //        case None => BadRequest("Incorrect data passed")
-    //      }
 
     case req @ GET -> Root / "guess" / number =>
       val session = for {
         sessionIdCookie <- req.cookies.find(_.name == "sessionId")
-//        sessions        <- sessionsRef.unsafeRunSync()
+        sessions = sessionsRef.get()
         session <- sessions.get(sessionIdCookie.content)
       } yield session
 
@@ -120,19 +94,21 @@ object GuessServer extends IOApp {
                 case 0 => "You guessed the number!"
               }
               if (result != 0 && attemptsLeft == 0) {
-                sessions -= session.id
+                sessionsRef.updateAndGet(sessions => sessions - session.id)
                 Ok(
                   s"You ran out of attempts! The number was ${session.numberToGuess}",
                   Header("GameOver", true.toString)
                 )
               } else if (result == 0) {
-                sessions -= session.id
+                sessionsRef.updateAndGet(sessions => sessions - session.id)
                 Ok(string, Header("GameOver", true.toString))
               } else {
-                sessions(session.id) = Session(
-                  session.id,
-                  session.numberToGuess,
-                  attemptsLeft
+                sessionsRef.updateAndGet(sessions =>
+                  sessions + (session.id -> Session(
+                    session.id,
+                    session.numberToGuess,
+                    attemptsLeft
+                  ))
                 )
                 Ok(string, Header("GameOver", false.toString))
               }
@@ -191,41 +167,23 @@ object GuessClient extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO](ExecutionContext.global).resource
-      .parZip(Blocker[IO])
-      .use {
-        case (client, blocker) =>
-          for {
-            _ <- printLine(
-              "Guessing game has started. Enter minimal and maximal bounds, attempt count. Then try to guess the number"
-            )
-            entry <- promptStartParameters()
-            (min, max, attempts) = entry
-            startGameRequest <- Method.GET(uri / "start" / min / max / attempts)
-            responseCookies <- client.run(startGameRequest).use { response =>
-              IO(response.cookies)
-            }
-            sessionCookie <- IO.fromOption(
-              responseCookies.find(_.name == "sessionId")
-            )(throw new InputMismatchException)
-            _ <- guessNumber(client, sessionCookie)
-            _ <- printLine("Game over")
-          } yield ()
+      .use { client =>
+        for {
+          _ <- printLine(
+            "Guessing game has started. Enter minimal and maximal bounds, attempt count. Then try to guess the number"
+          )
+          entry <- promptStartParameters()
+          (min, max, attempts) = entry
+          startGameRequest <- Method.GET(uri / "start" / min / max / attempts)
+          responseCookies <- client.run(startGameRequest).use { response =>
+            IO(response.cookies)
+          }
+          sessionCookie <- IO.fromOption(
+            responseCookies.find(_.name == "sessionId")
+          )(throw new InputMismatchException)
+          _ <- guessNumber(client, sessionCookie)
+          _ <- printLine("Game over")
+        } yield ()
       }
       .as(ExitCode.Success)
-}
-
-object Test extends IOApp {
-  private val uri = uri"http://localhost:9001"
-
-  private def printLine(string: String = ""): IO[Unit] = IO(println(string))
-
-  //  private def readLine: IO[String] = IO(StdIn.readLine())
-
-  def run(args: List[String]): IO[ExitCode] = {
-    for {
-      _ <- GuessServer.run(List.empty).start
-      _ <- IO.sleep(1.second)
-      _ <- GuessClient.run(List.empty)
-    } yield ExitCode.Success
-  }
 }
