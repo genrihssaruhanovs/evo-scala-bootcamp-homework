@@ -15,26 +15,8 @@ import org.http4s.client.Client
 import org.http4s.util.CaseInsensitiveString
 
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.DurationInt
 import scala.io.StdIn
 import scala.util.Random
-
-// Homework. Place the solution under `http` package in your homework repository.
-//
-// Write a server and a client that play a number guessing game together.
-//
-// Communication flow should be as follows:
-// 1. The client asks the server to start a new game by providing the minimum and the maximum number that can
-//    be guessed, as well as the maximum number of attempts.
-// 2. The server comes up with some random number within the provided range.
-// 3. The client starts guessing the number. Upon each attempt, the server evaluates the guess and responds to
-//    the client, whether the current number is lower, greater or equal to the guessed one.
-// 4. The game ends when the number is guessed or there are no more attempts left. At this point the client
-//    should terminate, while the server may continue running forever.
-// 5. The server should support playing many separate games (with different clients) at the same time.
-//
-// Use HTTP or WebSocket for communication. The exact protocol and message format to use is not specified and
-// should be designed while working on the task.
 
 import java.util.UUID.randomUUID
 
@@ -130,6 +112,7 @@ object GuessClient extends IOApp {
 
   private def readLine: IO[String] = IO(StdIn.readLine())
 
+  // to be reworked in a recursion until user entery is all numeric
   def promptStartParameters(): IO[(String, String, String)] = {
     for {
       min      <- printLine("Enter minimal bound") *> readLine
@@ -180,7 +163,7 @@ object GuessClient extends IOApp {
           }
           sessionCookie <- IO.fromOption(
             responseCookies.find(_.name == "sessionId")
-          )(throw new InputMismatchException)
+          )(throw new InputMismatchException) //to be reworked
           _ <- guessNumber(client, sessionCookie)
           _ <- printLine("Game over")
         } yield ()
