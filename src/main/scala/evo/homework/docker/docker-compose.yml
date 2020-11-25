@@ -1,0 +1,13 @@
+---
+version: "3.8"
+services:
+# Create docker-compose file, which could be used to run integration tests for this project
+  mailcatcher:
+    image: "tophfr/mailcatcher:latest"
+    ports:
+      - "1080:80"
+      - "25:25"
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
