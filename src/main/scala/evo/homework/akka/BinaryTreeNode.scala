@@ -20,9 +20,9 @@ final class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Act
   private var removed = initiallyRemoved
 
   override def receive: Receive = {
-    case i @ Insert(_, _, _)   => doInsert(i)
-    case c @ Contains(_, _, _) => doContains(c)
-    case r @ Remove(_, _, _)   => doRemove(r)
+    case i: Insert   => doInsert(i)
+    case c: Contains => doContains(c)
+    case r: Remove   => doRemove(r)
   }
 
   private def doInsert(m: Insert): Unit = {
