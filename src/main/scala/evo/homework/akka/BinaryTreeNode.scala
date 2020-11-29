@@ -26,7 +26,8 @@ final class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Act
   }
 
   private def doInsert(m: Insert): Unit = {
-    if (m.elem == elem) m.requester ! OperationFinished(m.id)
+    if (m.elem == elem)
+      m.requester ! OperationFinished(m.id)
     else {
       val position = if (m.elem > elem) Right else Left
       subtrees.get(position) match {
@@ -39,7 +40,8 @@ final class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Act
   }
 
   private def doContains(m: Contains): Unit = {
-    if (m.elem == elem && !removed) m.requester ! ContainsResult(m.id, result = true)
+    if (m.elem == elem)
+      m.requester ! ContainsResult(m.id, result = !removed)
     else {
       val position = if (m.elem > elem) Right else Left
       subtrees.get(position) match {
