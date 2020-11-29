@@ -17,26 +17,28 @@ import org.http4s.util.CaseInsensitiveString
 import scala.concurrent.ExecutionContext
 import scala.io.StdIn
 import scala.util.Random
-
 import java.util.UUID.randomUUID
+
+import cats.effect.concurrent.Ref
 
 object GuessServer extends IOApp {
   case class Session(id: String, numberToGuess: Int, attemptsLeft: Int)
 
-  //  val sessionsRef: IO[Ref[IO, Map[String, Session]]] =
-  //    Ref.of[IO, Map[String, Session]](Map.empty[String, Session])
+//    val test: IO[Ref[IO, Map[String, Session]]] =
+//      Ref.of[IO, Map[String, Session]](Map.empty[String, Session])
   private val sessionsRef: AtomicReference[Map[String, Session]] =
     new AtomicReference(Map.empty[String, Session])
 
-  override def run(args: List[String]): IO[ExitCode] =
-    BlazeServerBuilder[IO](ExecutionContext.global)
-      .bindHttp(port = 9001, host = "localhost")
-      .withHttpApp(httpApp)
-      .serve
-      .compile
-      .drain
-      .as(ExitCode.Success)
-
+  override def run(args: List[String]): IO[ExitCode] = for {
+    sessionsRef2 <- Ref.of[IO, Map[String, Session]](Map.empty)
+    _ <- BlazeServerBuilder[IO] (ExecutionContext.global)
+    .bindHttp(port = 9001, host = "localhost")
+    .withHttpApp(httpApp)
+    .serve
+     .compile
+     .drain
+//     .as(ExitCode.Success)
+  } yield ExitCode.Success
   private val guessRoute = HttpRoutes.of[IO] {
     case GET -> Root / "start" / IntVar(min) / IntVar(max) / IntVar(
           attempts

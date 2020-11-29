@@ -1,12 +1,11 @@
 package evo.homework
 
 import evo.homework.ImplicitsHomework.SuperVipCollections4s._
-import evo.homework.ImplicitsHomework.SuperVipCollections4s.syntax._
 import evo.homework.ImplicitsHomework.SuperVipCollections4s.instances._
+import evo.homework.ImplicitsHomework.SuperVipCollections4s.syntax._
 import evo.homework.ImplicitsHomeworkSpec.TestValue
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-
 
 class ImplicitsHomeworkSpec extends AnyFreeSpec with Matchers {
 
@@ -151,11 +150,13 @@ class ImplicitsHomeworkSpec extends AnyFreeSpec with Matchers {
       userId = 2,
       hashTags = Vector("foodie"), //+12 + 6 * 2 for chars = +24
       attributes = PackedMultiMap("hasNoFriends" -> "true"), //2 * 12 + 16 * 2 for chars = +56
-      fbiNotes = List(FbiNote( //+12
-        month = "september", //+ 12 + 9 * 2 = +30
-        favouriteChar = 'E', //+2
-        watchedPewDiePieTimes = 2568L, //+8
-      ))
+      fbiNotes = List(
+        FbiNote( //+12
+          month = "september", //+ 12 + 9 * 2 = +30
+          favouriteChar = 'E', //+2
+          watchedPewDiePieTimes = 2568L, //+8
+        )
+      )
     ) //second entry score: 68 + 24 + 56 + 12 + 30 + 2 + 8 = 200
 
     "should limit the size score of data stored" in {

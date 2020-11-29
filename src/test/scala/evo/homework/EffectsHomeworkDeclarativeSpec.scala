@@ -1,11 +1,12 @@
-import java.util.concurrent.Executors
+package evo.homework
 
+import evo.homework.EffectsHomeworkDeclarative._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import evo.homework.EffectsHomework1._
 
 import scala.util.Try
-class EffectsHomework1Spec extends AnyFreeSpec with Matchers{
+
+class EffectsHomeworkDeclarativeSpec extends AnyFreeSpec with Matchers {
   "Effects homework IO functionality" - {
     "should work with different constructs and conversions" - {
 

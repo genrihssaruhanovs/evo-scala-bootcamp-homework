@@ -1,4 +1,4 @@
-package json
+package evo.homework.json
 
 import java.time.format.DateTimeFormatter
 import java.time.{LocalDate, ZonedDateTime}
@@ -19,18 +19,17 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import scalaj.http.Http
 
-
 /**
- * HOMEWORK:
- *
- * Some classes and generated JSON codecs are provided for NBA API.
- * Unfortunately, they don't work as expected out of the box.
- * The task is to fix (rewrite) some of the codecs to make tests pass.
- * You are not supposed to change anything in _class_ json.HomeworkSpec,
- * instead of it you are supposed to change whatever you want inside _companion object_ for json.HomeworkSpec.
- *
- * It would be nice to avoid using Encoder/Decoder.forProductN where you specify all field names
- */
+  * HOMEWORK:
+  *
+  * Some classes and generated JSON codecs are provided for NBA API.
+  * Unfortunately, they don't work as expected out of the box.
+  * The task is to fix (rewrite) some of the codecs to make tests pass.
+  * You are not supposed to change anything in _class_ evo.homework.json.HomeworkSpec,
+  * instead of it you are supposed to change whatever you want inside _companion object_ for evo.homework.json.HomeworkSpec.
+  *
+  * It would be nice to avoid using Encoder/Decoder.forProductN where you specify all field names
+  */
 class JsonHomeworkSpec extends AnyWordSpec with Matchers with EitherValues {
   import JsonHomeworkSpec._
 
@@ -65,52 +64,58 @@ object JsonHomeworkSpec {
   implicit val config: Configuration = Configuration.default.copy(
     transformMemberNames = {
       case "fullTimeoutRemaining" => "full_timeout_remaining"
-      case other => other
+      case other                  => other
     }
   )
 
   implicit val encodeLocalDate: Encoder[LocalDate] = Encoder.encodeString.contramap[LocalDate](_.toString)
   implicit val decodeLocalDate: Decoder[LocalDate] = Decoder.decodeString.emap { str =>
-    Either.catchNonFatal(LocalDate.parse(str, DateTimeFormatter.BASIC_ISO_DATE)).leftMap(err => "LocalDate: " + err.getMessage)
+    Either
+      .catchNonFatal(LocalDate.parse(str, DateTimeFormatter.BASIC_ISO_DATE))
+      .leftMap(err => "LocalDate: " + err.getMessage)
   }
 
-  @ConfiguredJsonCodec final case class TeamTotals(assists: String, fullTimeoutRemaining: String, plusMinus: String)
+  @ConfiguredJsonCodec final case class TeamTotals(
+    assists: String,
+    fullTimeoutRemaining: String,
+    plusMinus: String
+  )
   @JsonCodec final case class TeamBoxScore(totals: TeamTotals)
   @JsonCodec final case class GameStats(hTeam: TeamBoxScore, vTeam: TeamBoxScore)
   @JsonCodec final case class PrevMatchup(gameDate: LocalDate, gameId: String)
   @JsonCodec final case class BoxScore(
-                                        basicGameData: Game,
-                                        previousMatchup: PrevMatchup,
-                                        stats: Option[GameStats],
-                                      )
+    basicGameData: Game,
+    previousMatchup: PrevMatchup,
+    stats: Option[GameStats],
+  )
   @JsonCodec final case class JustScore(score: String)
   @JsonCodec final case class TeamStats(
-                                         linescore: List[JustScore],
-                                         loss: String,
-                                         score: String,
-                                         teamId: String,
-                                         triCode: String
-                                       )
+    linescore: List[JustScore],
+    loss: String,
+    score: String,
+    teamId: String,
+    triCode: String
+  )
   @JsonCodec final case class GameDuration(hours: String, minutes: String)
   @JsonCodec final case class Arena(
-                                     city: String,
-                                     country: String,
-                                     isDomestic: Boolean,
-                                     name: String,
-                                     stateAbbr: String
-                                   )
+    city: String,
+    country: String,
+    isDomestic: Boolean,
+    name: String,
+    stateAbbr: String
+  )
   @JsonCodec final case class Game(
-                                    arena: Arena,
-                                    attendance: String,
-                                    endTimeUTC: Option[ZonedDateTime],
-                                    gameDuration: GameDuration,
-                                    gameId: String,
-                                    gameUrlCode: String,
-                                    hTeam: TeamStats,
-                                    isBuzzerBeater: Boolean,
-                                    startTimeUTC: ZonedDateTime,
-                                    vTeam: TeamStats,
-                                  )
+    arena: Arena,
+    attendance: String,
+    endTimeUTC: Option[ZonedDateTime],
+    gameDuration: GameDuration,
+    gameId: String,
+    gameUrlCode: String,
+    hTeam: TeamStats,
+    isBuzzerBeater: Boolean,
+    startTimeUTC: ZonedDateTime,
+    vTeam: TeamStats,
+  )
   @JsonCodec final case class Scoreboard(games: List[Game], numGames: Int)
 
   private def fetchScoreboard(date: LocalDate): Either[circe.Error, Scoreboard] = {
@@ -121,7 +126,9 @@ object JsonHomeworkSpec {
 
   private def fetchGameInfo(date: LocalDate, gameId: String): Either[circe.Error, BoxScore] = {
     val dateString = date.format(DateTimeFormatter.BASIC_ISO_DATE)
-    val body = Http(s"https://data.nba.net/10s/prod/v1/$dateString/${gameId}_boxscore.json").asString.body
+    val body = Http(
+      s"https://data.nba.net/10s/prod/v1/$dateString/${gameId}_boxscore.evo.homework.json"
+    ).asString.body
     decode[BoxScore](body)
   }
 }
